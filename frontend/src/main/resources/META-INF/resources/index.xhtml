@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<h:html xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Persons report</title>
+    <link rel="stylesheet" href="https://unpkg.com/primeflex@^3/primeflex.css"/>
+    <link rel="shortcut icon" type="image/x-icon" href="#{resource['images/favicon.ico']}"/>
+</h:head>
+<h:body>
+    <div class="card" style="margin-top: 2%;margin-left: 15%; margin-right: 15%;">
+        <h:form id="form-persons">
+            <p:growl id="menssages" showDetail="true" />
+            <div class="card">
+                <p:menubar>
+                    <p:menuitem value="Nova Pessoa" icon="pi pi-fw pi-plus" update=":form-modal:person-dialog"
+                                actionListener="#{indexController.createEmptyPerson}"
+                                oncomplete="PF('personDialog').show()" />
+                    <f:facet name="options">
+                        <p:commandButton id="reset" icon="pi pi-sync" update=":form-persons:persons-table" class="test" styleClass="rounded-button ui-button-primary ui-button-flat"
+                                actionListener="#{indexController.reset}"/>
+                    </f:facet>
+                </p:menubar>
+            </div>
+            <div class="card">
+                <p:dataTable value="#{indexController.persons}" var="person" id="persons-table"
+                widgetVar="personsTable" paginator="true" rows="8" paginatorPosition="bottom">
+
+                    <p:column headerText="Id" style="text-align: center" sortBy="#{person.id}" filterBy="#{person.id}">
+                        <h:outputText value="#{person.id}"/>
+                    </p:column>
+
+                    <p:column headerText="Nome" style="text-align: center" sortBy="#{person.name}" filterBy="#{person.name}">
+                        <h:outputText value="#{person.name}"/>
+                    </p:column>
+
+                    <p:column headerText="Nome do Cargo" style="text-align: center" sortBy="#{person.objRole.name}" filterBy="#{person.objRole.name}">
+                        <h:outputText rendered="#{person.objRole == null}" value="Nenhum" />    
+                        <h:outputText value="#{person.objRole.name}"/>
+                    </p:column>
+
+                    <p:column id="salary" headerText="Salário" style="text-align: center" sortBy="#{indexController.calculeTotalSalary(person)}" filterBy="#{indexController.calculeTotalSalary(person)}">
+                        <h:outputText value="#{indexController.calculeTotalSalary(person)}">
+                            <f:convertNumber type="currency" currencySymbol="R$ "/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column style="text-align: center">
+                        <p:commandButton icon="pi pi-pencil" update=":form-modal:person-dialog"
+                                         oncomplete="PF('personDialog').show()" process="@this"
+                                         class="ui-button-primary" style="margin-right: .5rem">
+                            <f:setPropertyActionListener target="#{indexController.selectedPerson}"
+                                                         value="#{person}" />
+                            <p:resetInput target=":form-modal:person-dialog" />
+                        </p:commandButton>
+
+                        <p:commandButton class="ui-button-danger" icon="pi pi-trash"
+                                         process="@this" oncomplete="PF('removePersonDialog').show()">
+                            <f:setPropertyActionListener target="#{indexController.selectedPerson}"
+                                                         value="#{person}" />
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+                <p:blockUI block="persons-table" trigger="reset" widgetVar="buiDatatable">
+                    <i class="pi pi-spin pi-spinner" style="font-size: 40px;"></i>
+                </p:blockUI>
+            </div>
+        </h:form>
+
+        <h:form id="form-modal">
+            <p:dialog header="Pessoa" showEffect="fade" modal="true" widgetVar="personDialog"
+                        responsive="true">
+            <p:outputPanel id="person-dialog" class="ui-fluid">
+                <div class="field">
+                    <p:outputLabel for="name">Nome</p:outputLabel>
+                    <p:inputText id="name" value="#{indexController.selectedPerson.name}"
+                                 required="true" />
+                </div>
+                <div class="field">
+                    <p:outputLabel for="roleName">Nome do Cargo</p:outputLabel>
+                    <p:selectOneMenu id="roleName" value="#{indexController.selectedPerson.roleId}">
+                        <f:selectItems value="#{indexController.roles}" var="role" 
+                            itemValue="#{role.id}" itemLabel="#{role.name}" />
+                    </p:selectOneMenu>
+                </div>
+            </p:outputPanel>
+
+                <f:facet name="footer">
+                    <p:commandButton value="Salvar" icon="pi pi-check" process="person-dialog @this" styleClass="ui-button-primary"
+                                     actionListener="#{indexController.savePerson}" />
+                    <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('personDialog').hide()"
+                                     styleClass="ui-button-danger" type="button"/>
+                </f:facet>
+
+            </p:dialog>
+
+            <p:confirmDialog widgetVar="removePersonDialog" showEffect="fade" width="300"
+                              message="Remover Pessoa?" header="Confirmar" severity="warn">
+                <p:commandButton value="Sim" icon="pi pi-check" actionListener="#{indexController.removePerson}" styleClass="ui-button-primary"
+                                     process="@this" oncomplete="PF('removePersonDialog').hide()" />
+                <p:commandButton value="Não" type="button" styleClass="ui-button-danger"
+                                 icon="pi pi-times" onclick="PF('removePersonDialog').hide()"/>
+            </p:confirmDialog>
+        </h:form>
+    </div>
+</h:body>
+</h:html>

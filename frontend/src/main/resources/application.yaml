@@ -1,0 +1,16 @@
+server:
+  port: ${APP_PORT:8090}
+
+joinfaces:
+  primefaces:
+    theme: arya
+
+backend-api:
+  protocol: ${BACKEND_PROTOCOL:http}
+  host: ${BACKEND_HOST:localhost}
+  port: ${BACKEND_PORT:8889}
+  apiBase: ${BACKEND_BASE_API:/api}
+  personCrud: ${BACKEND_PERSON:/person}
+  roleCrud: ${BACKEND_ROLE:/role}
+  salaryCrud: ${BACKEND_SALARY:/salary}
+  defaultPageSize: ${BACKEND_PAGE_SIZE:20}

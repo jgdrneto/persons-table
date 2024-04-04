@@ -1,0 +1,1 @@
+GRANT ALL ON *.* TO 'db_user'@'%';

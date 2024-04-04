@@ -1,0 +1,91 @@
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: db
+    hostname: db
+    restart: always
+    ports:
+      - ${DB_HOST_PORT}:${DB_APP_PORT}
+    networks:
+      persons-report-net:
+        ipv4_address: ${DB_HOST}
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_TCP_PORT=${DB_APP_PORT}
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d
+      - db-data:/var/lib/mysql
+  db-client:
+    image: phpmyadmin:5.2.0-apache
+    container_name: db-client
+    hostname: db-client
+    restart: always
+    ports:
+      - ${DB_CLIENT_HOST_PORT}:${DB_CLIENT_APP_PORT}
+    networks:
+      persons-report-net:
+        ipv4_address: ${DB_CLIENT_HOST}
+    environment:
+      - PMA_HOST=${DB_HOST}
+      - PMA_PORT=${DB_APP_PORT}
+      - PMA_USER=${DB_USER}
+      - PMA_PASSWORD=${DB_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - APACHE_PORT=${DB_CLIENT_APP_PORT}
+      - PMA_ARBITRARY=1
+    depends_on:
+      - db
+  backend:
+    build: ./backend 
+    container_name: backend
+    hostname: backend
+    restart: always
+    volumes:
+      - backend-data:${BACKEND_DATA}
+    ports:
+      - ${BACKEND_HOST_PORT}:${BACKEND_APP_PORT}
+    networks:
+      persons-report-net:
+        ipv4_address: ${BACKEND_HOST}
+    environment:
+      - DB_URL=jdbc:mysql://${DB_HOST}:${DB_APP_PORT}/${DB_NAME}?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&maxReconnects=30&initialTimeout=5
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - APP_PORT=${BACKEND_APP_PORT}
+    depends_on:
+      - db
+  frontend:
+    build: ./frontend 
+    container_name: frontend
+    hostname: frontend
+    restart: always
+    volumes:
+      - frontend-data:${FRONTEND_DATA}
+    ports:
+      - ${FRONTEND_HOST_PORT}:${FRONTEND_APP_PORT}
+    networks:
+      persons-report-net:
+        ipv4_address: ${FRONTEND_HOST}
+    environment:
+      - BACKEND_HOST=${BACKEND_HOST}
+      - BACKEND_PORT=${BACKEND_APP_PORT}
+      - APP_PORT=${FRONTEND_APP_PORT}
+    depends_on:
+      - backend
+volumes:
+  backend-data:
+  frontend-data:
+  db-data:
+
+networks:
+  persons-report-net:
+    name: persons-report-net
+    driver: bridge
+    ipam:
+     config:
+       - subnet: ${SUBNET}
+         gateway: ${GATEWAY}
